@@ -14,7 +14,7 @@
         id="menu"
       >
         <li class="nav-item">
-          <a href="#" class="nav-link align-middle px-0">
+          <a href="javascript:void(0)" class="nav-link align-middle px-0" v-on:click="emitCustomEvent('Adventure')">
             <i class="fs-4 bi-house"></i>
             <span class="ms-1 d-none d-sm-inline">Aventura</span>
           </a>
@@ -55,6 +55,12 @@
 <script>
 export default {
   name: "MenuApp",
+  emits: ['type'],
+  methods: {
+    emitCustomEvent(type){
+      this.$emit("type", type)
+    }
+  }
 };
 </script>
 
