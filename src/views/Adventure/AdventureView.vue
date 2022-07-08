@@ -10,6 +10,8 @@
 
 <script>
 import ExcerptView from "@/views/Excerpt/ExcerptView.vue";
+import Adventure from "@/Model/Adventure";
+
 export default {
     name: "AdventureView",
     components: {
@@ -18,11 +20,13 @@ export default {
     data(){
       return{
         adventure: "",
+        adventureModel: new Adventure()
       }
     },
     methods: {
       submitModel(){
-        localStorage.setItem('adventure', this.adventure);
+        // localStorage.setItem('adventure', this.adventure);
+        this.adventureModel.save()
       }
     }
 }
