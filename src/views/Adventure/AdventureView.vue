@@ -35,7 +35,9 @@ export default {
 
       this.adventureModel.data['title'] = this.title;
       this.adventureModel.data['summary'] = this.summary;
-      this.adventureModel.save();
+      if (!this.adventureModel.save()) {
+        console.log('erro ao salvar:', this.adventureModel.errors);
+      }
     }
   }
 }

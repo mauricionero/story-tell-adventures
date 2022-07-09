@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 export class ModelContainer {
   // constructor() {
   //   localStorage.getItem(this.structureName())
@@ -7,7 +9,9 @@ export class ModelContainer {
   validations = {}
   errors = {}
   hasValidationError = false
+  shouldGenerateUUID = true
 
+  // available callbacks
   before_validation = function () { return true; }
   after_validation = function () { return true; }
   before_save = function () { return true; }
@@ -32,6 +36,8 @@ export class ModelContainer {
   }
 
   save() {
+    this.generateUUID();
+
     if (!this.validate()) { return; }
 
     this.before_save();
@@ -100,6 +106,12 @@ export class ModelContainer {
   resetErrors() {
     this.errors = {};
     this.hasValidationError = false;
+  }
+
+  generateUUID() {
+    if (this.shouldGenerateUUID && !this.data['uuid']) {
+      this.data['uuid'] = uuidv4();
+    }
   }
 
    //////////////
