@@ -31,6 +31,8 @@ export default {
     submitModel() {
       console.log('this.title', this.title);
       console.log('this.summary', this.summary);
+      console.log('Adventure.all()', Adventure.all());
+
       this.adventureModel.data['title'] = this.title;
       this.adventureModel.data['summary'] = this.summary;
       this.adventureModel.save();

@@ -13,16 +13,46 @@ export class ModelContainer {
   before_save = function () { return true; }
   after_save = function () { return true; }
 
+  static structureName() {
+    return this.name.toLowerCase();
+  }
+
+  static isEmptyLocalStorage() {
+    return localStorage.getItem(this.structureName()) == null;
+  }
+
+  static initiateLocalStorage() {
+    localStorage.setItem(this.structureName(), "[]");
+  }
+
+  static all() {
+    if (this.isEmptyLocalStorage()) { return []; }
+    
+    return JSON.parse(localStorage.getItem(this.structureName()));
+  }
+
+  static insertItem() {
+    if (this.isEmptyLocalStorage()) {
+      this.initiateLocalStorage();
+    }
+
+    let allItems = this.all();
+
+    allItems.push(this.data);
+    
+    localStorage.setItem(
+      this.structureName(),
+      JSON.stringify(allItems)
+    )
+  }
+
   save() {
     if (!this.validate()) { return; }
 
     this.before_save();
 
-    console.log('this.structureName()', this.structureName());
-    console.log('this.prepareDataSave()', this.prepareDataSave());
-
     if (!this.hasValidationError) {
-      this.createItem();
+      this.constructor.insertItem();
     }
 
     this.after_save();
@@ -33,7 +63,10 @@ export class ModelContainer {
   validate() {
     this.resetErrors();
 
-    if (!this.before_validation()) { return false; }
+    if (!this.before_validation()) {
+      this.hasValidationError = true;
+      return false;
+    }
 
     if (Object.keys(this.validations).length > 0) {
       for (var field in this.validations) {
@@ -51,27 +84,6 @@ export class ModelContainer {
     this.after_validation();
 
     return !this.hasValidationError;
-  }
-
-  createItem() {
-    // levar em conta que deve ser um array de itens.
-    // Deve ser lido o localStorage, transformado em json e então inserir um novo item, para entao salvar
-    // localStorage.setItem(
-    //   this.structureName(),
-    //   this.prepareDataSave()
-    // )
-  }
-
-  all() {
-    return JSON.parse(this.data);
-  }
-
-  structureName() {
-    return this.constructor.name.toLowerCase();
-  }
-
-  prepareDataSave() {
-    return JSON.stringify(this.data);
   }
 
   addError(field, message) {
