@@ -31,33 +31,35 @@ export class ModelContainer {
     return JSON.parse(localStorage.getItem(this.structureName()));
   }
 
-  static insertItem() {
-    if (this.isEmptyLocalStorage()) {
-      this.initiateLocalStorage();
-    }
-
-    let allItems = this.all();
-
-    allItems.push(this.data);
-    
-    localStorage.setItem(
-      this.structureName(),
-      JSON.stringify(allItems)
-    )
-  }
-
   save() {
     if (!this.validate()) { return; }
 
     this.before_save();
 
     if (!this.hasValidationError) {
-      this.constructor.insertItem();
+      this.insertItem();
     }
 
     this.after_save();
 
     return true;
+  }
+
+  insertItem() {
+    if (this.data == undefined) { return; }
+
+    if (this.constructor.isEmptyLocalStorage()) {
+      this.constructor.initiateLocalStorage();
+    }
+
+    let allItems = this.constructor.all();
+
+    allItems.push(this.data);
+    
+    localStorage.setItem(
+      this.constructor.structureName(),
+      JSON.stringify(allItems)
+    )
   }
 
   validate() {
@@ -106,11 +108,30 @@ export class ModelContainer {
   mandatory = (field, value, valOptions) => {
     if (!value) {
       let msg = valOptions['message'] ? valOptions['message'] : 'Mandatory field';
-
       this.addError(field, msg);
       
       return false;
     }
     return true;
   }
+
+  uniqueness = (field, value, valOptions) => {
+    let allItems = this.constructor.all();
+
+    for (var i in allItems) {
+      console.log('allItems[i]', allItems[i]);
+      console.log('value', value);
+      if (allItems[i] != undefined && allItems[i].title == value) {
+        let msg = valOptions['message'] ? valOptions['message'] : 'Should be unique';
+        this.addError(field, msg);
+
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+   // validations
+  //////////////
 }
