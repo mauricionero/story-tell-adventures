@@ -31,13 +31,21 @@ export default {
     submitModel() {
       console.log('this.title', this.title);
       console.log('this.summary', this.summary);
-      console.log('Adventure.all()', Adventure.all());
+      Adventure.all().forEach(function(adventure) {
+        console.log('adventure', adventure);
+        console.log("adventure.data['title']", adventure.data['title']);
+      });
 
       this.adventureModel.data['title'] = this.title;
       this.adventureModel.data['summary'] = this.summary;
       if (!this.adventureModel.save()) {
         console.log('erro ao salvar:', this.adventureModel.errors);
       }
+
+      let itemFound = Adventure.findBy('title', 'teste');
+      console.log('itemFound (teste)', itemFound);
+      itemFound = Adventure.findBy('title', 'asdfasdf');
+      console.log('itemFound (asdfasdf)', itemFound);
     }
   }
 }

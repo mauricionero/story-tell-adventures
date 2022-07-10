@@ -6,6 +6,8 @@ export class ModelContainer {
   errors = {};
   hasValidationError = false;
   shouldGenerateUUID = true;
+  idField = 'uuid'
+  isNew = null;
 
   static allData = [];
 
@@ -19,6 +21,7 @@ export class ModelContainer {
     for (var attribute in itemData) {
       this.data[attribute] = itemData[attribute];
     }
+    this.isNew = true;
   }
 
   static structureName() {
@@ -44,8 +47,10 @@ export class ModelContainer {
     console.log('this.allData.length', this.allData.length);
     if (this.allData.length == 0) {
       // transform data in model instances
-      this.allJson().forEach(function(item) {
-        this.allData.push(new this(item));
+      this.allJson().forEach(function(itemData) {
+        let entity = new this(itemData);
+        entity.isNew = false;
+        this.allData.push(entity);
       }, this);
     }
 
@@ -60,7 +65,7 @@ export class ModelContainer {
     this.before_save();
 
     if (!this.hasValidationError) {
-      this.insertItem();
+      this.insertOrUpdateItem();
     }
 
     this.after_save();
@@ -68,6 +73,11 @@ export class ModelContainer {
     return true;
   }
 
+  insertOrUpdateItem() {
+    this.insertItem();
+  }
+
+  // inserts in localStorage AND in memory as a model instance
   insertItem() {
     if (this.data == undefined) { return; }
 
@@ -83,7 +93,24 @@ export class ModelContainer {
       this.constructor.structureName(),
       JSON.stringify(allItems)
     )
-    this.constructor.allData.push(new this.constructor(this.data));
+
+    let entity = new this.constructor(this.data);
+    entity.isNew = false;
+    this.constructor.allData.push(entity);
+  }
+
+  static findBy(fieldName, value) {
+    let allItems = this.all();
+
+    for (var i in allItems) {
+      let item = allItems[i];
+
+      if (item.data[fieldName] == value) {
+        return item;
+      }
+    }
+
+    return null;
   }
 
   validate() {
