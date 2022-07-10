@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 export class ModelContainer {
-  data = {};
+  data = {}; // only this instance values
   validations = {};
   errors = {};
   hasValidationError = false;
@@ -9,13 +9,19 @@ export class ModelContainer {
   idField = 'uuid'
   isNew = null;
 
-  static allData = [];
+  static allData = []; // instances of models
 
   // available callbacks
   before_validation = function () { return true; }
   after_validation = function () { return true; }
   before_save = function () { return true; }
   after_save = function () { return true; }
+  before_update = function () { return true; }
+  after_update = function () { return true; }
+  before_create = function () { return true; }
+  after_create = function () { return true; }
+  before_destroy = function () { return true; }
+  after_destroy = function () { return true; }
 
   constructor(itemData) {
     for (var attribute in itemData) {
@@ -23,6 +29,9 @@ export class ModelContainer {
     }
     this.isNew = true;
   }
+
+   ////////////////
+  // class methods
 
   static structureName() {
     return this.name.toLowerCase();
@@ -36,15 +45,21 @@ export class ModelContainer {
     localStorage.setItem(this.structureName(), "[]");
   }
 
+  // returns localStore as a JSON (array of hashes)
   static allJson() {
     if (this.isEmptyLocalStorage()) { return []; }
     
     return JSON.parse(localStorage.getItem(this.structureName()));
   }
 
+  static checkAndInitiateLocalStorage() {
+    if (this.isEmptyLocalStorage()) {
+      this.initiateLocalStorage();
+    }
+  }
+
   // singleton
   static all () {
-    console.log('this.allData.length', this.allData.length);
     if (this.allData.length == 0) {
       // transform data in model instances
       this.allJson().forEach(function(itemData) {
@@ -55,48 +70,6 @@ export class ModelContainer {
     }
 
     return this.allData;
-  }
-
-  save() {
-    this.generateUUID();
-
-    if (!this.validate()) { return; }
-
-    this.before_save();
-
-    if (!this.hasValidationError) {
-      this.insertOrUpdateItem();
-    }
-
-    this.after_save();
-
-    return true;
-  }
-
-  insertOrUpdateItem() {
-    this.insertItem();
-  }
-
-  // inserts in localStorage AND in memory as a model instance
-  insertItem() {
-    if (this.data == undefined) { return; }
-
-    if (this.constructor.isEmptyLocalStorage()) {
-      this.constructor.initiateLocalStorage();
-    }
-
-    let allItems = this.constructor.allJson();
-
-    allItems.push(this.data);
-    
-    localStorage.setItem(
-      this.constructor.structureName(),
-      JSON.stringify(allItems)
-    )
-
-    let entity = new this.constructor(this.data);
-    entity.isNew = false;
-    this.constructor.allData.push(entity);
   }
 
   static findBy(fieldName, value) {
@@ -112,6 +85,158 @@ export class ModelContainer {
 
     return null;
   }
+
+   // class methods
+  ////////////////
+
+   ///////////////////
+  // instance methods
+
+  save() {
+    this.generateUUID();
+
+    if (!this.validate()) { return; }
+
+    this.before_save();
+
+    if (!this.hasValidationError) {
+      this.createOrUpdateItem();
+    }
+
+    this.after_save();
+
+    return true;
+  }
+
+  createOrUpdateItem() {
+    if (this.isNew) {
+      this.create();
+    } else {
+      this.update();
+    }
+  }
+
+  create() {
+    if (!this.before_create()) { return; }
+
+    this.insert();
+
+    this.after_create();
+  }
+
+  update() {
+    if (!this.before_update()) { return; }
+
+    this.remove();
+    this.insert();
+
+    this.after_update();
+  }
+
+  destroy() {
+    if (!this.before_destroy()) { return; }
+
+    this.remove();
+
+    this.after_destroy();
+  }
+
+   // instance methods
+  ///////////////////
+
+   ///////////////////////////////////////
+  // localStorage and memory manipulation
+
+  insert() {
+    if (this.data == undefined) { return; }
+
+    this.constructor.checkAndInitiateLocalStorage();
+
+    let allItems = this.constructor.allJson();
+
+    allItems.push(this.data);
+
+    localStorage.setItem(
+      this.constructor.structureName(),
+      JSON.stringify(allItems)
+    )
+
+    let entity = new this.constructor(this.data);
+    entity.isNew = false;
+    this.isNew = false;
+    this.constructor.allData.push(entity);
+  }
+
+  remove() {
+    if (this.data == undefined) { return; }
+
+    this.constructor.checkAndInitiateLocalStorage();
+
+    this.removeFromLocalStorage();
+    this.removeFromMemory();
+  }
+
+  removeFromLocalStorage() {
+    let allLocalStorageItems = this.constructor.allJson();
+    let wasFound = false;
+    let valueToCompare = this.data[this.idField];
+
+    for (var i in allLocalStorageItems) {
+      // comparing identifications to find and remove
+      if (allLocalStorageItems[i][this.idField] == valueToCompare) {
+        allLocalStorageItems.splice(i, 1);
+        wasFound = true;
+        break;
+      }
+    }
+
+    if (wasFound) {
+      localStorage.setItem(
+        this.constructor.structureName(),
+        JSON.stringify(allLocalStorageItems)
+      )
+
+      return true;
+    } else {
+      console.error(
+        'Item not found to remove in localStorage:',
+        this.constructor.structureName(),
+        this.idField,
+        valueToCompare
+      );
+    }
+
+    return;
+  }
+
+  removeFromMemory() {
+    let allEntities = this.constructor.all();
+    let wasFound = false;
+    let valueToCompare = this.data[this.idField];
+
+    for (var i in allEntities) {
+      // comparing identifications to find and remove
+      if (allEntities[i].data[this.idField] == valueToCompare) {
+        allEntities.splice(i, 1);
+        wasFound = true;
+        break;
+      }
+    }
+
+    if (!wasFound) {
+      console.error(
+        'Item not found to remove from memory:',
+        this.constructor.structureName(),
+        this.idField,
+        valueToCompare
+      );
+    }
+
+    return;
+  }
+
+   // localStorage and memory manipulation
+  ///////////////////////////////////////
 
   validate() {
     this.resetErrors();
@@ -176,8 +301,9 @@ export class ModelContainer {
     let allItems = this.constructor.allJson();
 
     for (var i in allItems) {
-      console.log('allItems[i]', allItems[i]);
-      console.log('value', value);
+      // skip own item if editing
+      if (!this.isNew && allItems[i][this.idField] == this.data[this.idField]) { continue; }
+
       if (allItems[i] != undefined && allItems[i].title == value) {
         let msg = valOptions['message'] ? valOptions['message'] : 'Should be unique';
         this.addError(field, msg);
