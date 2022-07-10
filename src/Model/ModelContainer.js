@@ -1,21 +1,25 @@
 import { v4 as uuidv4 } from 'uuid';
 
 export class ModelContainer {
-  // constructor() {
-  //   localStorage.getItem(this.structureName())
-  // }
+  data = {};
+  validations = {};
+  errors = {};
+  hasValidationError = false;
+  shouldGenerateUUID = true;
 
-  data = {}
-  validations = {}
-  errors = {}
-  hasValidationError = false
-  shouldGenerateUUID = true
+  static allData = [];
 
   // available callbacks
   before_validation = function () { return true; }
   after_validation = function () { return true; }
   before_save = function () { return true; }
   after_save = function () { return true; }
+
+  constructor(itemData) {
+    for (var attribute in itemData) {
+      this.data[attribute] = itemData[attribute];
+    }
+  }
 
   static structureName() {
     return this.name.toLowerCase();
@@ -29,10 +33,23 @@ export class ModelContainer {
     localStorage.setItem(this.structureName(), "[]");
   }
 
-  static all() {
+  static allJson() {
     if (this.isEmptyLocalStorage()) { return []; }
     
     return JSON.parse(localStorage.getItem(this.structureName()));
+  }
+
+  // singleton
+  static all () {
+    console.log('this.allData.length', this.allData.length);
+    if (this.allData.length == 0) {
+      // transform data in model instances
+      this.allJson().forEach(function(item) {
+        this.allData.push(new this(item));
+      }, this);
+    }
+
+    return this.allData;
   }
 
   save() {
@@ -58,7 +75,7 @@ export class ModelContainer {
       this.constructor.initiateLocalStorage();
     }
 
-    let allItems = this.constructor.all();
+    let allItems = this.constructor.allJson();
 
     allItems.push(this.data);
     
@@ -66,6 +83,7 @@ export class ModelContainer {
       this.constructor.structureName(),
       JSON.stringify(allItems)
     )
+    this.constructor.allData.push(new this.constructor(this.data));
   }
 
   validate() {
@@ -128,7 +146,7 @@ export class ModelContainer {
   }
 
   uniqueness = (field, value, valOptions) => {
-    let allItems = this.constructor.all();
+    let allItems = this.constructor.allJson();
 
     for (var i in allItems) {
       console.log('allItems[i]', allItems[i]);
