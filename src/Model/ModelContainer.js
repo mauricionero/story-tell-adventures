@@ -284,6 +284,32 @@ export class ModelContainer {
     }
   }
 
+  fullMessages(errorsSeparator = ', ', fieldsSeparator = '; ') {
+    return this.messagesByField(errorsSeparator).join(fieldsSeparator);
+  }
+
+  messagesByField(errorsSeparator = ', ') {
+    let fullMessage = [];
+
+    for (var field in this.errors) {
+      fullMessage.push(`${field}: ${this.errors[field].join(errorsSeparator)}`);
+    }
+
+    return fullMessage;
+  }
+
+  uniqueMessages() {
+    let fullMessage = [];
+
+    for (var field in this.errors) {
+      for (var errorPosition in this.errors[field]) {
+        fullMessage.push(`${field}: ${this.errors[field][errorPosition]}`);
+      }
+    }
+
+    return fullMessage;
+  }
+
    //////////////
   // validations
 
