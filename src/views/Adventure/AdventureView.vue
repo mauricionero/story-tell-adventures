@@ -1,25 +1,40 @@
 <template>
   <div>
     <h3>Adventure</h3>
-
-    Título: <input type="text" v-model="adventureModel.data['title']" /><br />
-    Summary: <input type="text" v-model="adventureModel.data['summary']" /><br />
-    <button @click="submitModel">EnviaDado</button>
-
-    <p v-if="errors">{{error}}</p>
-    <p v-if="success">{{success}}</p>
     <ExcerptView />
+
+    <button type="button" class="btn btn-primary" @click="toggleModal()">
+      Launch demo modal
+    </button>
+
+    <ModalComponent
+      v-if="modalActive"
+      :title="'Cadastro de Aventura'"
+      @close="toggleModal"
+    >
+      <label for="">
+        <p>Título:</p>
+        <input type="text" v-model="adventureModel.data['title']" /><br />
+      </label>
+      <label for="">
+        <p>Resumo:</p>
+        <input type="text" v-model="adventureModel.data['summary']" /><br />
+      </label>
+      <button type="button" class="btn btn-primary" @click="submitModel">EnviaDado</button>
+    </ModalComponent>    
   </div>
 </template>
 
 <script>
 import ExcerptView from "@/views/Excerpt/ExcerptView.vue";
 import Adventure from "@/Model/Adventure";
+import ModalComponent from "@/components/ModalComponent/ModalComponent.vue";
 
 export default {
   name: 'AdventureView',
   components: {
-    ExcerptView
+    ExcerptView,
+    ModalComponent
   },
 
   data() {
@@ -28,7 +43,7 @@ export default {
       summary: '',
       adventureModel: new Adventure(),
       errors: [],
-      success: null
+      modalActive: false
     }
   },
 
@@ -37,19 +52,31 @@ export default {
       this.adventureModel.save()
         .then((res) => {
           this.errors = [];
-          this.success = null;
           if(res){
-            this.success = "Deu certo!"
             this.adventureModel = new Adventure();
+            this.$notify({
+              title: "Uhuu",
+              text: "Oba, gravou!",
+              type: "success"
+            });
           }else{
             this.errors = this.adventureModel.fullMessages();
-            [
-              "Title is not unique",
-            ]
+            
+            this.errors.forEach((err) => {
+              this.$notify({
+                title: "Oops, deu um erro!",
+                text: err,
+                type: "error"
+              });
+            })
           }
         })
         .catch(err => {
-          this.errors.push("Deu um erro!");
+          this.$notify({
+            title: "Oops, deu um erro!",
+            text: err,
+            type: "error"
+          });
         })
 
 
@@ -70,11 +97,14 @@ export default {
       // console.log('itemFound (teste)', itemFound);
       // itemFound = Adventure.findBy('title', 'asdfasdf');
       // console.log('itemFound (asdfasdf)', itemFound);
+    },
+    toggleModal(){
+      this.modalActive = !this.modalActive;
     }
   }
 }
 </script>
 
-<style>
-
+<style lang="scss" scoped>
+  @import "./Adventure.scss";
 </style>

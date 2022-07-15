@@ -7,4 +7,10 @@ export default class Adventure extends ModelContainer{
       uniqueness: true
     }
   }
+
+  fullMessages() {
+    return [
+      "Oi eu sou um erro",
+    ]
+  }
 }
