@@ -6,7 +6,7 @@
     Summary: <input type="text" v-model="adventureModel.data['summary']" /><br />
     <button @click="submitModel">EnviaDado</button>
 
-    <p v-if="errors">{{error}}</p>
+    <p v-if="errors"></p>
     <p v-if="success">{{success}}</p>
     <ExcerptView />
   </div>
@@ -42,6 +42,9 @@ export default {
             this.success = "Deu certo!"
             this.adventureModel = new Adventure();
           }else{
+            console.log('erro ao salvar uniqueMessages:', this.adventureModel.uniqueMessages());
+            console.log('erro ao salvar messagesByField:', this.adventureModel.messagesByField());
+            console.log('erro ao salvar fullMessages:', this.adventureModel.fullMessages());
             this.errors = this.adventureModel.fullMessages();
             [
               "Title is not unique",
