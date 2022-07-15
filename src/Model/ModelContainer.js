@@ -92,10 +92,10 @@ export class ModelContainer {
    ///////////////////
   // instance methods
 
-  save() {
+  async save() {
     this.generateUUID();
 
-    if (!this.validate()) { return; }
+    if (!this.validate()) { return false; }
 
     this.before_save();
 
